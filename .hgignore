@@ -1,0 +1,8 @@
+syntax: glob
+*.o
+*.so
+Makefile
+mkmf.log
+*.gem
+test.rb
+*.orig
