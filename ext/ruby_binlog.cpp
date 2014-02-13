@@ -61,7 +61,11 @@ struct Client {
 #ifndef RUBY_UBF_IO
     TRAP_BEG;
 #endif
-    result = p->m_binlog->connect();
+    try {
+      result = p->m_binlog->connect();
+    } catch (const std::exception& e) {
+      rb_raise(rb_eBinlogError, "%s", e.what());
+    }
 #ifndef RUBY_UBF_IO
     TRAP_END;
 #endif
