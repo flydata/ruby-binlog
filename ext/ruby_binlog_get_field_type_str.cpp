@@ -32,6 +32,9 @@ const char* get_field_type_str(mysql::system::enum_field_types type) {
   case mysql::system::MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";  break;
   case mysql::system::MYSQL_TYPE_STRING:      return "STRING";      break;
   case mysql::system::MYSQL_TYPE_GEOMETRY:    return "GEOMETRY";    break;
+  case mysql::system::MYSQL_TYPE_TIME2:       return "TIME2";       break;
+  case mysql::system::MYSQL_TYPE_DATETIME2:   return "DATETIME2";   break;
+  case mysql::system::MYSQL_TYPE_TIMESTAMP2:  return "TIMESTAMP2";  break;
   }
 
   return 0;
