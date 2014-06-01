@@ -16,7 +16,7 @@ namespace binlog {
 
 struct Client {
   Binary_log *m_binlog;
-  VALUE m_table_map;
+  std::map<boost::uint64_t, VALUE> *m_table_maps;
 
   static void free(Client *p) {
     if (p->m_binlog) {
@@ -24,21 +24,28 @@ struct Client {
       p->m_binlog = 0;
     }
 
-    p->m_table_map = 0;
+    if (p->m_table_maps) {
+      p->m_table_maps->clear();
+      delete p->m_table_maps;
+      p->m_table_maps = 0;
+    }
 
     delete p;
   }
 
   static void mark(Client *p) {
-    if (p->m_table_map) {
-      rb_gc_mark(p->m_table_map);
+    if (p->m_table_maps) {
+      std::map<boost::uint64_t, VALUE>::iterator itor;
+      for (itor = p->m_table_maps->begin(); itor != p->m_table_maps->end(); ++itor) {
+        rb_gc_mark(itor->second);
+      }
     }
   }
 
   static VALUE alloc(VALUE klass) {
     Client *p = new Client();
     p->m_binlog = 0;
-    p->m_table_map = 0;
+    p->m_table_maps = 0;
     return Data_Wrap_Struct(klass, &mark, &free, p);
   }
 
@@ -49,6 +56,7 @@ struct Client {
     Data_Get_Struct(self, Client, p);
     p->m_binlog = new mysql::Binary_log(
       mysql::system::create_transport(StringValuePtr(uri)));
+    p->m_table_maps = new std::map<boost::uint64_t, VALUE>;
 
     return Qnil;
   }
@@ -221,7 +229,7 @@ struct Client {
     case TABLE_MAP_EVENT:
       retval = rb_funcall(rb_cBinlogTableMapEvent, rb_intern("new"), 0);
       TableMapEvent::set_event(retval, event);
-      p->m_table_map = retval;
+      p->m_table_maps->insert(std::pair<boost::uint64_t, VALUE>(static_cast<Table_map_event*>(event)->table_id, retval));
       break;
 
     // XXX: Is it right?
@@ -231,8 +239,11 @@ struct Client {
     case WRITE_ROWS_EVENT: 
     case UPDATE_ROWS_EVENT:
     case DELETE_ROWS_EVENT:
+      if (p->m_table_maps->find(static_cast<Row_event*>(event)->table_id) == p->m_table_maps->end()) {
+        rb_raise(rb_eBinlogError, "No table map for row event");
+      }
       retval = rb_funcall(rb_cBinlogRowEvent, rb_intern("new"), 0);
-      RowEvent::set_event(retval, event, p->m_table_map);
+      RowEvent::set_event(retval, event, p->m_table_maps->at(static_cast<Row_event*>(event)->table_id));
       break;
 
     case INTVAR_EVENT:
@@ -248,6 +259,7 @@ struct Client {
     case XID_EVENT:
       retval = rb_funcall(rb_cBinlogXid, rb_intern("new"), 0);
       XidEvent::set_event(retval, event);
+      p->m_table_maps->clear();
       break;
 
     default:
