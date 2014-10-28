@@ -285,7 +285,11 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
 #endif
-      result = p->m_binlog->set_position(i_position);
+      try {
+        result = p->m_binlog->set_position(i_position);
+      } catch (const std::exception& e) {
+        rb_raise(rb_eBinlogError, "%s", e.what());
+      }
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
@@ -297,7 +301,11 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
 #endif
-      result = p->m_binlog->set_position(s_filename, i_position);
+      try {
+        result = p->m_binlog->set_position(s_filename, i_position);
+      } catch (const std::exception& e) {
+        rb_raise(rb_eBinlogError, "%s", e.what());
+      }
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
