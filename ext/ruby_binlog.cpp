@@ -16,7 +16,7 @@ namespace binlog {
 
 struct Client {
   Binary_log *m_binlog;
-  std::map<boost::uint64_t, VALUE> *m_table_maps;
+  std::map<uint64_t, VALUE> *m_table_maps;
 
   static void free(Client *p) {
     if (p->m_binlog) {
@@ -35,7 +35,7 @@ struct Client {
 
   static void mark(Client *p) {
     if (p->m_table_maps) {
-      std::map<boost::uint64_t, VALUE>::iterator itor;
+      std::map<uint64_t, VALUE>::iterator itor;
       for (itor = p->m_table_maps->begin(); itor != p->m_table_maps->end(); ++itor) {
         rb_gc_mark(itor->second);
       }
@@ -56,7 +56,7 @@ struct Client {
     Data_Get_Struct(self, Client, p);
     p->m_binlog = new mysql::Binary_log(
       mysql::system::create_transport(StringValuePtr(uri)));
-    p->m_table_maps = new std::map<boost::uint64_t, VALUE>;
+    p->m_table_maps = new std::map<uint64_t, VALUE>;
 
     return Qnil;
   }
@@ -126,18 +126,8 @@ struct Client {
       return Qfalse;
     }
 
-    if (driver->m_socket) {
-      bool socket_is_open;
-
-#ifndef RUBY_UBF_IO
-      TRAP_BEG;
-#endif
-      socket_is_open = driver->m_socket->is_open();
-#ifndef RUBY_UBF_IO
-      TRAP_END;
-#endif
-
-      return socket_is_open ? Qfalse : Qtrue;
+    if (driver->connecting()) {
+      return Qfalse;
     } else {
       return Qtrue;
     }
@@ -160,6 +150,8 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
 #endif
+      result = p->m_binlog->wait_for_next_event(&event);
+      /*
       while (1) {
         if (driver->m_event_queue->is_not_empty()) {
           result = p->m_binlog->wait_for_next_event(&event);
@@ -175,6 +167,7 @@ struct Client {
           }
         }
       }
+      */
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
@@ -229,7 +222,7 @@ struct Client {
     case TABLE_MAP_EVENT:
       retval = rb_funcall(rb_cBinlogTableMapEvent, rb_intern("new"), 0);
       TableMapEvent::set_event(retval, event);
-      p->m_table_maps->insert(std::pair<boost::uint64_t, VALUE>(static_cast<Table_map_event*>(event)->table_id, retval));
+      p->m_table_maps->insert(std::pair<uint64_t, VALUE>(static_cast<Table_map_event*>(event)->table_id, retval));
       break;
 
     // XXX: Is it right?

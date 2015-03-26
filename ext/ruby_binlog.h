@@ -5,8 +5,8 @@
 #define private public
 
 #include <string>
-#include <binlog_api.h>
 #include <ruby.h>
+#include <binlog_api.h>
 
 #ifndef RUBY_UBF_IO
 #include <rubysig.h>
@@ -34,7 +34,7 @@ extern VALUE rb_eBinlogError;
 
 namespace ruby {
 namespace binlog {
-const char* get_field_type_str(mysql::system::enum_field_types type);
+const char* get_field_type_str(enum_field_types type);
 mysql::system::Binlog_tcp_driver *cast_to_tcp_driver(mysql::system::Binary_log_driver *driver);
 } // namespace binlog
 } // namespace ruby
