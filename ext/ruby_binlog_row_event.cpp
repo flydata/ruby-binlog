@@ -229,7 +229,7 @@ void RowEvent::proc0(mysql::Row_of_fields &fields, VALUE rb_fields) {
     } else {
       std::string out;
       converter.to(out, *itor);
-      rval = rb_str_new2(out.c_str());
+      rval = rb_str_new(out.c_str(), out.length());
     }
 
     rb_ary_push(rb_fields, rval);
