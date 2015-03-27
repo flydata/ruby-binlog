@@ -126,7 +126,7 @@ struct Client {
       return Qfalse;
     }
 
-    if (driver->connecting()) {
+    if (driver->connected()) {
       return Qfalse;
     } else {
       return Qtrue;
