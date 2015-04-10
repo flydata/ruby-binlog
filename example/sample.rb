@@ -26,6 +26,10 @@ begin
   # XXX: Do not reuse a client instance, after connection goes out.
   client = Binlog::Client.new(mysql_url)
 
+  if ssl_ca
+    client.set_ssl_ca(ssl_ca)
+  end
+
   sleep 0.5 until client.connect
 
   if master_log_file and master_log_pos
