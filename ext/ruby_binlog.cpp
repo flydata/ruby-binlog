@@ -397,6 +397,18 @@ struct Client {
     return ULONG2NUM(position);
   }
 
+  static VALUE set_ssl_ca(VALUE self, VALUE filename) {
+    Client *p;
+
+    Check_Type(filename, T_STRING);
+    Data_Get_Struct(self, Client, p);
+    std::string s_filename(StringValuePtr(filename));
+
+    p->m_binlog->set_ssl_ca(s_filename);
+
+    return Qnil;
+  }
+
   static void init() {
     VALUE rb_cBinlogClient = rb_define_class_under(rb_mBinlog, "Client", rb_cObject);
     rb_define_alloc_func(rb_cBinlogClient, &alloc);
@@ -411,6 +423,7 @@ struct Client {
     rb_define_method(rb_cBinlogClient, "position=", __F(&set_position2), 1);
     rb_define_method(rb_cBinlogClient, "get_position", __F(&get_position), -1);
     rb_define_method(rb_cBinlogClient, "position", __F(&get_position2), 0);
+    rb_define_method(rb_cBinlogClient, "set_ssl_ca", __F(&set_ssl_ca), 1);
   }
 };
 
