@@ -107,7 +107,7 @@ VALUE RowEvent::get_column_types(VALUE self) {
 
     for (std::vector<uint8_t>::iterator itor = tme->m_event->columns.begin();
          itor != tme->m_event->columns.end(); itor++) {
-      const char *colname = get_field_type_str(static_cast<mysql::system::enum_field_types>(*itor));
+      const char *colname = get_field_type_str(static_cast<enum_field_types>(*itor));
       rb_ary_push(retval, (colname ? rb_str_new2(colname) : Qnil));
     }
   }
@@ -218,13 +218,13 @@ void RowEvent::proc0(mysql::Row_of_fields &fields, VALUE rb_fields) {
 
   do {
     VALUE rval = Qnil;
-    mysql::system::enum_field_types type = itor->type();
+    enum_field_types type = itor->type();
 
     if (itor->is_null()) {
       rval = Qnil;
-    } else if (type == mysql::system::MYSQL_TYPE_FLOAT) {
+    } else if (type == MYSQL_TYPE_FLOAT) {
       rval = rb_float_new(itor->as_float());
-    } else if (type == mysql::system::MYSQL_TYPE_DOUBLE) {
+    } else if (type == MYSQL_TYPE_DOUBLE) {
       rval = rb_float_new(itor->as_double());
     } else {
       std::string out;

@@ -96,7 +96,7 @@ VALUE TableMapEvent::get_column_types(VALUE self) {
 
   for (std::vector<uint8_t>::iterator itor = p->m_event->columns.begin();
        itor != p->m_event->columns.end(); itor++) {
-    const char *colname = get_field_type_str(static_cast<mysql::system::enum_field_types>(*itor));
+    const char *colname = get_field_type_str(static_cast<enum_field_types>(*itor));
     rb_ary_push(retval, (colname ? rb_str_new2(colname) : Qnil));
   }
 
