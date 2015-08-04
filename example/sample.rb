@@ -28,6 +28,8 @@ begin
 
   if ssl_ca
     client.set_ssl_ca(ssl_ca)
+    #client.set_ssl_cipher("AES256-SHA:AES128-SHA")
+    client.set_ssl_cipher("DHE-RSA-AES256-SHA")
   end
 
   sleep 0.5 until client.connect
