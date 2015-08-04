@@ -285,7 +285,11 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
 #endif
-      result = p->m_binlog->set_position(i_position);
+      try {
+        result = p->m_binlog->set_position(i_position);
+      } catch (const std::exception& e) {
+        rb_raise(rb_eBinlogError, "%s", e.what());
+      }
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
@@ -297,7 +301,11 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
 #endif
-      result = p->m_binlog->set_position(s_filename, i_position);
+      try {
+        result = p->m_binlog->set_position(s_filename, i_position);
+      } catch (const std::exception& e) {
+        rb_raise(rb_eBinlogError, "%s", e.what());
+      }
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
@@ -389,6 +397,30 @@ struct Client {
     return ULONG2NUM(position);
   }
 
+  static VALUE set_ssl_ca(VALUE self, VALUE filename) {
+    Client *p;
+
+    Check_Type(filename, T_STRING);
+    Data_Get_Struct(self, Client, p);
+    std::string s_filename(StringValuePtr(filename));
+
+    p->m_binlog->set_ssl_ca(s_filename);
+
+    return Qnil;
+  }
+
+  static VALUE set_ssl_cipher(VALUE self, VALUE cipher_list) {
+    Client *p;
+
+    Check_Type(cipher_list, T_STRING);
+    Data_Get_Struct(self, Client, p);
+    std::string s_cipher_list(StringValuePtr(cipher_list));
+
+    p->m_binlog->set_ssl_cipher(s_cipher_list);
+
+    return Qnil;
+  }
+
   static void init() {
     VALUE rb_cBinlogClient = rb_define_class_under(rb_mBinlog, "Client", rb_cObject);
     rb_define_alloc_func(rb_cBinlogClient, &alloc);
@@ -403,6 +435,8 @@ struct Client {
     rb_define_method(rb_cBinlogClient, "position=", __F(&set_position2), 1);
     rb_define_method(rb_cBinlogClient, "get_position", __F(&get_position), -1);
     rb_define_method(rb_cBinlogClient, "position", __F(&get_position2), 0);
+    rb_define_method(rb_cBinlogClient, "set_ssl_ca", __F(&set_ssl_ca), 1);
+    rb_define_method(rb_cBinlogClient, "set_ssl_cipher", __F(&set_ssl_cipher), 1);
   }
 };
 
