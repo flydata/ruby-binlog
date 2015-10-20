@@ -127,7 +127,7 @@ struct Client {
     driver = cast_to_tcp_driver(p->m_binlog->m_driver);
 
     if (!driver) {
-      return Qfalse;
+      return Qtrue;
     }
 
     if (driver->m_socket) {
