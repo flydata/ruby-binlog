@@ -63,6 +63,7 @@ struct Client {
 
   static VALUE connect(VALUE self) {
     Client *p;
+    VALUE rberr=NULL;
     int result;
 
     Data_Get_Struct(self, Client, p);
@@ -72,8 +73,11 @@ struct Client {
     try {
       result = p->m_binlog->connect();
     } catch (const std::exception& e) {
-      rb_raise(rb_eBinlogError, "%s", e.what());
+      rberr = rb_exc_new2(rb_eBinlogError, e.what());
     }
+    
+    if (rberr)
+      rb_exc_raise(rberr);
 #ifndef RUBY_UBF_IO
     TRAP_END;
 #endif
@@ -123,7 +127,7 @@ struct Client {
     driver = cast_to_tcp_driver(p->m_binlog->m_driver);
 
     if (!driver) {
-      return Qfalse;
+      return Qtrue;
     }
 
     if (driver->m_socket) {
