@@ -63,6 +63,7 @@ struct Client {
 
   static VALUE connect(VALUE self) {
     Client *p;
+    VALUE rberr=NULL;
     int result;
 
     Data_Get_Struct(self, Client, p);
@@ -72,8 +73,11 @@ struct Client {
     try {
       result = p->m_binlog->connect();
     } catch (const std::exception& e) {
-      rb_raise(rb_eBinlogError, "%s", e.what());
+      rberr = rb_exc_new2(rb_eBinlogError, e.what());
     }
+    
+    if (rberr)
+      rb_exc_raise(rberr);
 #ifndef RUBY_UBF_IO
     TRAP_END;
 #endif
@@ -81,22 +85,17 @@ struct Client {
     return (result == 0) ? Qtrue : Qfalse;
   }
 
-  // XXX: Don't use
-  /*
   static VALUE disconnect(VALUE self) {
     Client *p;
-    mysql::system::Binlog_tcp_driver *driver;
 
     Data_Get_Struct(self, Client, p);
-    driver = cast_to_tcp_driver(p->m_binlog->m_driver);
 
-    if (driver) {
-      driver->disconnect();
+    if (p->m_binlog) {
+      p->m_binlog->disconnect();
     }
 
     return Qnil;
   }
-   */
 
   // XXX: Don't use
   /*
@@ -123,7 +122,7 @@ struct Client {
     driver = cast_to_tcp_driver(p->m_binlog->m_driver);
 
     if (!driver) {
-      return Qfalse;
+      return Qtrue;
     }
 
     if (driver->m_socket) {
@@ -426,8 +425,8 @@ struct Client {
     rb_define_alloc_func(rb_cBinlogClient, &alloc);
     rb_define_private_method(rb_cBinlogClient, "initialize", __F(&initialize), 1);
     rb_define_method(rb_cBinlogClient, "connect", __F(&connect), 0);
+    rb_define_method(rb_cBinlogClient, "disconnect", __F(&disconnect), 0);
     // XXX: Don't use
-    //rb_define_method(rb_cBinlogClient, "disconnect", __F(&disconnect), 0);
     //rb_define_method(rb_cBinlogClient, "reconnect", __F(&reconnect), 0);
     rb_define_method(rb_cBinlogClient, "closed?", __F(&is_closed), 0);
     rb_define_method(rb_cBinlogClient, "wait_for_next_event", __F(&wait_for_next_event), 0);
