@@ -54,8 +54,12 @@ struct Client {
 
     Check_Type(uri, T_STRING);
     Data_Get_Struct(self, Client, p);
-    p->m_binlog = new mysql::Binary_log(
-      mysql::system::create_transport(StringValuePtr(uri)));
+    mysql::system::Binary_log_driver *binlog_driver =
+                     mysql::system::create_transport(StringValuePtr(uri));
+    if (binlog_driver == 0) {
+      rb_raise(rb_eBinlogError, "Invalid MySQL URI", StringValuePtr(uri));
+    }
+    p->m_binlog = new mysql::Binary_log(binlog_driver);
     p->m_table_maps = new std::map<boost::uint64_t, VALUE>;
 
     return Qnil;
