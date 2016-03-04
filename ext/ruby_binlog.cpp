@@ -157,7 +157,6 @@ struct Client {
     driver = cast_to_tcp_driver(p->m_binlog->m_driver);
 
     if (driver) {
-      int closed = 0;
       timeval interval = { 0, WAIT_INTERVAL };
 
 #ifndef RUBY_UBF_IO
@@ -171,9 +170,7 @@ struct Client {
           if (driver->m_socket && driver->m_socket->is_open()) {
             rb_thread_wait_for(interval);
           } else {
-            closed = 1;
-            driver->shutdown();
-            rb_thread_wait_for(interval);
+            // no more data will come
             break;
           }
         }
@@ -181,18 +178,6 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
-
-      if (closed) {
-#ifndef RUBY_UBF_IO
-        TRAP_BEG;
-#endif
-        driver->disconnect();
-#ifndef RUBY_UBF_IO
-        TRAP_END;
-#endif
-
-        rb_raise(rb_eBinlogError, "MySQL server has gone away");
-      }
     } else {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
@@ -202,7 +187,6 @@ struct Client {
       TRAP_END;
 #endif
     }
-
 
     if (result == ERR_EOF) {
       return Qfalse;
