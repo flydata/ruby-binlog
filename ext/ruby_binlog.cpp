@@ -164,7 +164,11 @@ struct Client {
 #endif
       while (1) {
         if (driver->m_event_queue->is_not_empty()) {
-          result = p->m_binlog->wait_for_next_event(&event);
+          try {
+            result = p->m_binlog->wait_for_next_event(&event);
+          } catch (const std::exception& e) {
+            rb_raise(rb_eBinlogError, "%s", e.what());
+          }
           break;
         } else {
           if (driver->m_socket && driver->m_socket->is_open()) {
@@ -182,7 +186,11 @@ struct Client {
 #ifndef RUBY_UBF_IO
       TRAP_BEG;
 #endif
-      result = p->m_binlog->wait_for_next_event(&event);
+      try {
+        result = p->m_binlog->wait_for_next_event(&event);
+      } catch (const std::exception& e) {
+        rb_raise(rb_eBinlogError, "%s", e.what());
+      }
 #ifndef RUBY_UBF_IO
       TRAP_END;
 #endif
